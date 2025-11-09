@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Upload to ImgBB
-  const IMGBB_KEY = "YOUR_KEY"; // Get at imgbb.com
+  const IMGBB_KEY = "ba2a2c0b932aac3946feef945c12e3f8"; // Get at imgbb.com
   async function upload(blob) {
     const fd = new FormData();
     fd.append("image", blob);
