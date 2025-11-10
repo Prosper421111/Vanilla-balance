@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/submit.js": { "memory": 1024 },
+    "api/logs.js": { "memory": 1024 }
+  }
+}
