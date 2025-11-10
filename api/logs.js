@@ -1,24 +1,16 @@
-import admin from "firebase-admin";
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || "{}");
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://vanilla-3be8f.firebaseio.com"
-  });
-}
-
-const db = admin.database();
+const serviceAccount = { /* SAME AS ABOVE */ };
+initializeApp({ credential: cert(serviceAccount) });
+const db = getFirestore();
 
 export default async function handler(req, res) {
   try {
-    const snapshot = await db.ref("submissions").once("value");
-    const data = snapshot.val() || {};
-    const logs = Object.entries(data).map(([id, entry]) => ({ id, ...entry }));
+    const snap = await db.collection('submissions').orderBy('timestamp', 'desc').get();
+    const logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.status(200).json(logs);
-  } catch (err) {
-    console.error("Error fetching logs:", err);
-    res.status(500).json({ error: err.message });
+  } catch (e) {
+    res.status(500).json([]);
   }
 }
