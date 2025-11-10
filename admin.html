@@ -52,10 +52,10 @@
         .gallery-title { color:#374151; font-weight:600; margin-top:8px; margin-bottom:4px; font-size:0.95rem; }
     </style>
 
-    <!-- Firebase SDKs -->
-    <script type="module" src="https://www.gstatic.com/firebasejs/12.5.0/firebase-app-compat.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/12.5.0/firebase-database-compat.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/12.5.0/firebase-storage-compat.js"></script>
+    <!-- Firebase SDKs (compat version - global) -->
+    <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-storage-compat.js"></script>
 </head>
 <body class="bg-pink-50">
     <!-- LOGIN SCREEN -->
@@ -82,11 +82,8 @@
         <div id="allImages" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app-compat.js";
-        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database-compat.js";
-        import { getStorage, listAll, ref as storageRef, deleteObject } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage-compat.js";
-
+    <script>
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBRmao9nvw49R1U6zS9NNY5W4Dn-NkNcrg",
             authDomain: "vanilla-3be8f.firebaseapp.com",
@@ -96,19 +93,22 @@
             appId: "1:476314002999:web:38adc0bd80a8d6b44f81b2"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const storage = getStorage(app);
+        // Initialize Firebase (global compat way)
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
 
-        const submissionsRef = ref(db, 'submissions');
-        const imagesFolderRef = storageRef(storage, 'images');
+        const submissionsRef = db.ref('submissions');
+        const imagesFolderRef = storage.ref('images');
 
+        // Login function
         window.login = () => {
-            if (document.getElementById('passInput').value === 'tobi123') {
+            const password = document.getElementById('passInput').value;
+            if (password === 'tobi123') {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('mainPanel').classList.remove('hidden');
                 loadData();
-                setInterval(loadData, 10000);
+                setInterval(loadData, 10000); // Refresh every 10 seconds
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
             }
@@ -116,28 +116,26 @@
 
         window.logout = () => location.reload();
 
-        async function loadData() {
-            // Load submissions
-            onValue(submissionsRef, async (snapshot) => {
+        function loadData() {
+            submissionsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('submissionsList');
-                const allImgs = new Set();
+                let html = '';
+                let index = data ? Object.keys(data).length : 0;
 
-                if (!data) {
+                if (!data || Object.keys(data).length === 0) {
                     list.innerHTML = '<p class="text-gray-500">No submissions yet.</p>';
+                    loadAllImages(); // Still load images even if no submissions
                     return;
                 }
-
-                let html = '';
-                let index = Object.keys(data).length;
 
                 Object.keys(data).reverse().forEach(key => {
                     const s = data[key];
                     index--;
 
                     let gallery = '';
-                    if (s.front_image) { gallery += `<a href="${s.front_image}" target="_blank" rel="noopener"><img src="${s.front_image}" alt="Front"></a>`; allImgs.add(s.front_image); }
-                    if (s.back_image) { gallery += `<a href="${s.back_image}" target="_blank" rel="noopener"><img src="${s.back_image}" alt="Back"></a>`; allImgs.add(s.back_image); }
+                    if (s.front_image) gallery += `<a href="${s.front_image}" target="_blank" rel="noopener"><img src="${s.front_image}" alt="Front"></a>`;
+                    if (s.back_image) gallery += `<a href="${s.back_image}" target="_blank" rel="noopener"><img src="${s.back_image}" alt="Back"></a>`;
 
                     const time = new Date(s.timestamp).toLocaleString();
 
@@ -158,44 +156,63 @@
                     </div>`;
                 });
 
-                list.innerHTML = html || '<p class="text-gray-500">No submissions yet.</p>';
-
-                // Load all images from storage
-                try {
-                    const res = await listAll(imagesFolderRef);
-                    const imgGrid = document.getElementById('allImages');
-                    let imgHtml = '';
-
-                    const items = res.items.sort((a, b) => b.name.localeCompare(a.name));
-                    for (const item of items) {
-                        const url = await getDownloadURL(item);
-                        allImgs.add(url);
-                        imgHtml += `
-                        <div class="submission-card">
-                            <img src="${url}" alt="" class="w-full h-40 object-cover rounded-md">
-                            <div class="mt-2 text-sm text-gray-600 break-all">${item.name}</div>
-                            <div class="mt-3">
-                                <button onclick="delImage('${item.fullPath}')" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</button>
-                            </div>
-                        </div>`;
-                    }
-                    imgGrid.innerHTML = imgHtml || '<p class="text-gray-500">No images yet.</p>';
-                } catch (e) {
-                    document.getElementById('allImages').innerHTML = '<p class="text-gray-500">No images yet.</p>';
-                }
+                list.innerHTML = html;
+                loadAllImages();
             });
         }
 
-        window.delSubmission = async (key) => {
+        function loadAllImages() {
+            imagesFolderRef.listAll().then(res => {
+                const imgGrid = document.getElementById('allImages');
+                let imgHtml = '';
+
+                if (res.items.length === 0) {
+                    imgGrid.innerHTML = '<p class="text-gray-500">No images yet.</p>';
+                    return;
+                }
+
+                // Sort by name descending (newest first)
+                const sortedItems = res.items.sort((a, b) => b.name.localeCompare(a.name));
+
+                let loaded = 0;
+                sortedItems.forEach(item => {
+                    item.getDownloadURL().then(url => {
+                        imgHtml += `
+                        <div class="submission-card">
+                            <img src="${url}" alt="${item.name}" class="w-full h-40 object-cover rounded-md">
+                            <div class="mt-2 text-sm text-gray-600 break-all">${item.name}</div>
+                            <div class="mt-3">
+                                <button onclick="delImage('${item.fullPath}')" class="delete-btn">Delete</button>
+                            </div>
+                        </div>`;
+                        loaded++;
+                        if (loaded === sortedItems.length) {
+                            imgGrid.innerHTML = imgHtml;
+                        }
+                    }).catch(() => {
+                        loaded++;
+                    });
+                });
+            }).catch(() => {
+                document.getElementById('allImages').innerHTML = '<p class="text-red-500">Error loading images.</p>';
+            });
+        }
+
+        window.delSubmission = (key) => {
             if (confirm('Delete this submission?')) {
-                await remove(ref(db, 'submissions/' + key));
+                db.ref('submissions/' + key).remove().then(() => {
+                    console.log("Submission deleted");
+                });
             }
         };
 
-        window.delImage = async (path) => {
+        window.delImage = (path) => {
             if (confirm('Delete this image?')) {
-                await deleteObject(storageRef(storage, path));
-                loadData();
+                storage.ref(path).delete().then(() => {
+                    loadData();
+                }).catch(err => {
+                    alert("Error deleting image: " + err.message);
+                });
             }
         };
     </script>
