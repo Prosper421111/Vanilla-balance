@@ -113,8 +113,8 @@
 
                 data.reverse().forEach((s, i) => {
                     let galleryBlock = '';
-                    if (s.front_image) galleryBlock += `<a href="${s.front_image}" target="_blank" rel="noopener"><img src="${s.front_image}" alt="Front"></a>`;
-                    if (s.back_image) galleryBlock += `<a href="${s.back_image}" target="_blank" rel="noopener"><img src="${s.back_image}" alt="Back"></a>`;
+                    if (s.front_image) galleryBlock += `<a href="${s.front_image}" target="_blank"><img src="${s.front_image}" alt="Front"></a>`;
+                    if (s.back_image) galleryBlock += `<a href="${s.back_image}" target="_blank"><img src="${s.back_image}" alt="Back"></a>`;
 
                     const time = new Date(s.timestamp).toLocaleString();
 
@@ -149,7 +149,6 @@
 
                 gallery.innerHTML = imgHtml;
             } catch (err) {
-                console.error("Error loading logs:", err);
                 list.innerHTML = '<p class="text-red-500">Error loading submissions.</p>';
                 gallery.innerHTML = '<p class="text-red-500">Error loading images.</p>';
             }
